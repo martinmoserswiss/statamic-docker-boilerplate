@@ -1,121 +1,134 @@
-# Statamic nginx docker boilerplate 🐳
+# Statamic Docker Boilerplate
 
-A production-ready and developer-friendly boilerplate for running [Statamic CMS](https://statamic.com) inside Docker using Nginx and PHP 8.5.
+Boilerplate für ein Statamic-Projekt mit PHP-FPM in Docker. `docker-compose.yml` und `.env.example` liegen im Projekt-Root, weitere Docker-Dateien unter `docker/`.
 
-This setup includes:
+## Voraussetzungen
 
-- 🐳 Docker Compose-based environment
-- ⚙️ PHP 8.5 with all required extensions (Statamic 6 ready)
-- 🌐 Nginx as web server
-- 📦 Composer for PHP dependencies
-- 🧩 Node.js with npm for asset compilation (Vite)
-- 🧹 Preconfigured permissions & Laravel cache handling
+Die Zielumgebung ist eine Unix-VM mit Root-Zugriff und folgenden installierten Tools:
 
-## Prerequisite
+- `git`
+- `docker` und `Docker Compose`
+- `caddy`
 
-You need a unix VM with root access, where the following tools are installed:
-- `Docker` and `Docker Compose`
-- `Nginx`
-- An editor like `vim`
+## Projektstruktur
 
-## ⚒️ Installation
-
-### 1. Clone this repo
-```bash
-git clone git@github.com:martinmoserswiss/statamic-nginx-docker-boilerplate.git project-name
+```text
+.
+├── .env.example
+├── docker-compose.yml
+├── app/                # Statamic projekt
+├── docker/
+│   ├── default.conf    # Nginx config im Container    
+│   └── php/            # Dockerfile und php.ini
+└── README.md
 ```
 
-### 2. Navigate to the project directory
+## Setup
+
+### 1. URL auf die passende VM umleiten
+
+Lege beim DNS-Provider A-Records für Root-Domain und `www` auf die IP deiner VM.
+
+Beispiel:
+
+- `my-project.com` -> `203.0.113.10`
+- `www.my-project.com` -> `203.0.113.10`
+
+### 2. Template klonen
 
 ```bash
+git clone git@github.com:martinmoserswiss/statamic-nginx-docker-boilerplate.git project-name
 cd project-name
 ```
 
-### 3. Clone existing Statamic project
+### 3. Template Repo entfernen
 
 ```bash
-git clone git@github.com:your-user/your-project.git app
+rm -rf .git
 ```
 
-### 4. Prepare Docker environment
+### 4. Boilerplate-.env erstellen
 
-Open `docker-compose.yml` file.
+Alle boilerplate-spezifischen Werte werden in `.env` im Projekt-Root gepflegt.
 
-1. Adjust container_name of the statamic service
-1. Adjust container_name of the web server
-1. Adjust port 8080
-
-### 5. Prepare Domain
-
-1. Login to your Hoster where you can manage your domain zone file.
-1. Create A records for both the root domain and the “www” subdomain. For example:
-- my-project.com → A record pointing to your server’s IP
-- www.my-project.com → A record pointing to the same IP
-
-### 6. Prepare Reverse Proxy
-
-1. Copy the `SAMPLE_my-project.com` to the host nginx config folder `sudo cp SAMPLE_my-project.com /etc/nginx/sites-available/`
-1. Rename the file to the name of your root domain like `sudo mv SAMPLE_my-project.com my-project.com`
-1. Adjust the server name to `server_name SAMPLE_my-project.com www.SAMPLE_my-project.com;` inside the file, with `sudo vim SAMPLE_my-project.com`
-1. Adjust the port of `proxy_pass` to the port which was defined in docker-compose.
-1. Activate the domain:
 ```bash
-sudo ln -s /etc/nginx/sites-available/my-project.com /etc/nginx/sites-enabled/
-sudo nginx -t && sudo systemctl reload nginx
+cp .env.example .env
 ```
 
-### 7. Create SSL-Certs with Certbot
+Passe danach die Werte in `.env` an.
 
-1. `sudo certbot --nginx -d www.my-project.com -d my-project.com`
+### 5. Caddy Site File erstellen
 
-### 6. Prepare Statamic
+1. Erstelle auf der VM eine Caddy-Site für die Domain. Z.B. `cp m0s.ch.caddy zoko.ch.caddy`
 
-1. Navigate back to your statamic project inside your folder: `cd ~/project-name/app`
-1. Create a copy of the .env file: `cp .env.example .env`
-1. Edit the .env file: `vim .env`
-1. Adjust `APP_NAME` --> name it without special caracters like `MyProject`
-1. Adjust `APP_URL` --> https://my-project.com
-1. If needed adjust `STATAMIC_LICENSE_KEY` or `STATAMIC_PRO_ENABLED`
+1. Passe entsprechend den Inhalt der Datei an.
 
-### 7. Build and start the container
+1. Lade die Caddy Konfiguration mit `docker exec caddy caddy reload --config /etc/caddy/Caddyfile` nach.
 
-1. Navigate to the project folder where docker-compose.yml is saved.
-1. Build the container `docker compose build`
-1. Start the container `docker compose up -d`
-1. You see your container when running `docker ps -a`
+### 6. Statamic-Projekt clonen
 
-### 8. Install statamic
-
-1. Connect to your container with bash: `docker exec -it my-project bash`
-1. Install statamic `composer install`
-1. Run `php artisan key:generate` so that the app key can be generated
-1. Download npm dependencies `npm install`
-1. Build your npm project `npm run build`
-
-## 🚀 Usage
-
-### Start application
+Das Repository wird nach `app/` geklont:
 
 ```bash
-cd app
-npm run dev
+git clone <STATAMIC_REPOSITORY> app
 ```
 
-## ⚒️ Maintainance
-
-### Stop containers
-
-`docker compose down`
-
-### Start containers
-
-`docker compose up -d`
-
-### Clear Statamic environment
+Beispiel:
 
 ```bash
-cd app
-php artisan view:clear      
+git clone git@github.com:martinmoserswiss/zoko.git app
+```
+
+### 7. Statamic-.env erstellen und Werte anpassen
+
+```bash
+cp app/.env.example app/.env
+```
+
+Passe die Werte an:
+
+- `APP_NAME`
+- `APP_URL`
+- optional `STATAMIC_LICENSE_KEY`
+- optional `STATAMIC_PRO_ENABLED`
+
+### 8. Docker Compose kontrollieren
+
+Die Standardwerte kommen aus `.env`. In der Regel reicht es, nur diese Datei zu pflegen.
+
+### 9. Container starten
+
+```bash
+docker compose up -d
+```
+
+### 10. Im Container Dependencies installieren
+
+```bash
+composer install
+npm install
+npm run build
+php artisan key:generate
+```
+
+## Betrieb
+
+Container stoppen:
+
+```bash
+docker compose down
+```
+
+Container starten:
+
+```bash
+docker compose up -d
+```
+
+Statamic-Cache leeren:
+
+```bash
+php artisan view:clear
 php artisan config:clear
 php artisan cache:clear
 ```

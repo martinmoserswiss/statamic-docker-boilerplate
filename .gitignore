@@ -1,7 +1,11 @@
-# app-Inhalte ignorieren
+# Statamic-App ignorieren, nur Platzhalter behalten
 /app/*
 !/app/.gitkeep
 
-# node_modules und vendor aus der App ignorieren
+# Abhaengigkeiten in der App ignorieren
 /app/node_modules
 /app/vendor
+
+# Lokale Umgebungsdateien ignorieren
+/.env
+/app/.env
