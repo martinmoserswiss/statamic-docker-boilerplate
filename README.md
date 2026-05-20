@@ -37,8 +37,8 @@ Beispiel:
 ### 2. Template klonen
 
 ```bash
-git clone git@github.com:martinmoserswiss/statamic-nginx-docker-boilerplate.git project-name
-cd project-name
+git clone git@github.com:martinmoserswiss/statamic-nginx-docker-boilerplate.git cms
+cd cms
 ```
 
 ### 3. Template Repo entfernen
